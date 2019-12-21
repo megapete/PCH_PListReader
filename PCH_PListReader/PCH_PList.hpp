@@ -16,6 +16,8 @@
 #include <map>
 #include <vector>
 
+#include "PCH_NumericManipulations.h"
+
 using namespace std;
 
 #define PCH_PLIST_HEADER_LENGTH     8   // bytes
@@ -26,6 +28,7 @@ struct PCH_PList_Entry;
 // our class
 class PCH_PList
 {
+    
 public:
     
     enum ObjectType
