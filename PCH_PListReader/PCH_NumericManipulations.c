@@ -25,6 +25,23 @@ int64_t PCH_SwapInt64HostToBig(int64_t x)
     return CFSwapInt64HostToBig(x);
 }
 
+// The 128-bit integer stuff follows Apple's logic
+
+PCH_int128_t PCH_SwapInt128HostToBig(PCH_int128_t x)
+{
+    if (CFByteOrderGetCurrent() == CFByteOrderBigEndian)
+    {
+        return x;
+    }
+    
+    PCH_int128_t result;
+    
+    result.high = CFSwapInt64HostToBig(x.high);
+    result.low = CFSwapInt64HostToBig(x.low);
+    
+    return result;
+}
+
 int16_t PCH_SwapInt16BigToHost(int16_t x)
 {
     return CFSwapInt16BigToHost(x);
@@ -38,6 +55,23 @@ int32_t PCH_SwapInt32BigToHost(int32_t x)
 int64_t PCH_SwapInt64BigToHost(int64_t x)
 {
     return CFSwapInt64BigToHost(x);
+}
+
+// The 128-bit integer stuff follows Apple's logic
+
+PCH_int128_t PCH_SwapInt128HBigToHost(PCH_int128_t x)
+{
+    if (CFByteOrderGetCurrent() == CFByteOrderBigEndian)
+    {
+        return x;
+    }
+    
+    PCH_int128_t result;
+    
+    result.high = CFSwapInt64BigToHost(x.high);
+    result.low = CFSwapInt64BigToHost(x.low);
+    
+    return result;
 }
 
 PCH_FloatBigEndian PCH_SwapFloatHostToBig(float x)

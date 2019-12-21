@@ -64,8 +64,8 @@
 			isa = PBXGroup;
 			children = (
 				D3CC52D623AAF1390099922E /* main.cpp */,
-				D3CC52DE23AAF6BA0099922E /* PCH_PList.cpp */,
 				D3CC52DF23AAF6BA0099922E /* PCH_PList.hpp */,
+				D3CC52DE23AAF6BA0099922E /* PCH_PList.cpp */,
 				D370C46F23AD5EAE004A79AF /* PCH_NumericManipulations.h */,
 				D370C47023AD5EAE004A79AF /* PCH_NumericManipulations.c */,
 			);

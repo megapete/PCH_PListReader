@@ -26,14 +26,23 @@
 typedef int32_t PCH_FloatBigEndian;
 typedef int64_t PCH_DoubleBigEndian;
 
+typedef struct
+{
+    int64_t high;
+    uint64_t low;
+    
+} PCH_int128_t;
+
 // Int swaps
 int16_t PCH_SwapInt16HostToBig(int16_t x);
 int32_t PCH_SwapInt32HostToBig(int32_t x);
 int64_t PCH_SwapInt64HostToBig(int64_t x);
+PCH_int128_t PCH_SwapInt128HostToBig(PCH_int128_t x);
 
 int16_t PCH_SwapInt16BigToHost(int16_t x);
 int32_t PCH_SwapInt32BigToHost(int32_t x);
 int64_t PCH_SwapInt64BigToHost(int64_t x);
+PCH_int128_t PCH_SwapInt128HBigToHost(PCH_int128_t x);
 
 // Float swaps
 PCH_FloatBigEndian PCH_SwapFloatHostToBig(float x);
