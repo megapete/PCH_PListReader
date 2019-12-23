@@ -11,6 +11,10 @@
 #ifndef PCH_NumericManipulations_h
 #define PCH_NumericManipulations_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
@@ -23,8 +27,8 @@
 
 #endif
 
-typedef int32_t PCH_FloatBigEndian;
-typedef int64_t PCH_DoubleBigEndian;
+typedef uint32_t PCH_FloatBigEndian;
+typedef uint64_t PCH_DoubleBigEndian;
 
 typedef struct
 {
@@ -50,5 +54,9 @@ PCH_DoubleBigEndian PCH_SwapDoubleHostToBig(double x);
 
 float PCH_SwapFloatBigToHost(PCH_FloatBigEndian x);
 double PCH_SwapDoubleBigToHost(PCH_DoubleBigEndian x);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PCH_NumericManipulations_h */

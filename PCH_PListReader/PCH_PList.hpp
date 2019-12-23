@@ -21,9 +21,11 @@
 using namespace std;
 
 #define PCH_PLIST_HEADER_LENGTH     8   // bytes
+#define PCH_PLIST_TRAILER_LENGTH    32  // bytes
 
-// forward declaration
+// forward declarations
 struct PCH_PList_Entry;
+struct PCH_PList_Dict;
 
 // our class
 class PCH_PList
@@ -38,6 +40,7 @@ public:
         boolTrueType,
         fillType,
         int64Type,
+        int128Type,
         doubleType,
         dateType,
         dataType,
@@ -77,12 +80,21 @@ private:
 struct PCH_PList_Entry
 {
     PCH_PList::ObjectType entryType;
-    PCH_PList::ObjectType *dataType;
+    size_t dataSize;
     void *data;
     
     // constructor
-    PCH_PList_Entry(PCH_PList::ObjectType entryType, PCH_PList::ObjectType *dataType, void *data) : entryType(entryType), dataType(dataType), data(data) {}
+    PCH_PList_Entry(PCH_PList::ObjectType entryType, size_t dataSize, void *data) : entryType(entryType), dataSize(dataSize), data(data) {}
     
+};
+
+struct PCH_PList_Dict
+{
+    uint64_t keyOffset;
+    uint64_t valueOffset;
+    
+    // constructor
+    PCH_PList_Dict(uint64_t keyOffset, uint64_t valueOffset) : keyOffset(keyOffset), valueOffset(valueOffset) {}
 };
 
 #endif /* PCH_PList_hpp */
