@@ -9,7 +9,9 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-
+#include <vector>
+#include <set>
+#include <map>
 
 
 #include "PCH_PList.hpp"
@@ -21,7 +23,9 @@ int main(int argc, const char * argv[]) {
     // no error checking, just assume that a valid plist file has been passed, then pass control off to the reading routines
     
     
-    
+    vector<double> ll;
+    set<double> mm;
+    map<string, double> kk;
     
     
     string filePath(argv[1]);
