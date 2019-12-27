@@ -318,9 +318,9 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
             case 0x05:
             {
                 // the procedure to figure out how many bytes to read in is the same as for data objects, above
-                int64_t count = (int64_t)lowNibble;
+                int64_t charCount = (int64_t)lowNibble;
                 
-                if (count == 0xF)
+                if (charCount == 0xF)
                 {
                     char countLenBuff;
                     pFile.read(&countLenBuff, 1);
@@ -331,16 +331,16 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     char *countBuffPtr = countBuff;
                     countBuffPtr += (8 - countLen);
                     pFile.read(countBuffPtr, countLen);
-                    memcpy(&count, countBuff, 8);
-                    count = PCH_SwapInt64BigToHost(count);
+                    memcpy(&charCount, countBuff, 8);
+                    charCount = PCH_SwapInt64BigToHost(charCount);
                 }
                 
-                char cResult[count];
-                pFile.read(cResult, count);
+                char cResult[charCount];
+                pFile.read(cResult, charCount);
 
-                auto result = new string(cResult, count);
+                auto result = new string(cResult, charCount);
                 
-                this->objectArray.push_back(PCH_PList_Entry(asciiStringType, count, result));
+                this->objectArray.push_back(PCH_PList_Entry(asciiStringType, charCount, result));
                 
                 break;
             }
@@ -350,9 +350,9 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
             {
                 // Unicode strings are a pain because each character (wchar_t) is 16-bits (2-bytes) long. And those bytes are Big-endian. Sigh.
                 // To start, we calculate start using the same method as for data objects, above.
-                int64_t count = (int64_t)lowNibble;
+                int64_t charCount = (int64_t)lowNibble;
                 
-                if (count == 0xF)
+                if (charCount == 0xF)
                 {
                     char countLenBuff;
                     pFile.read(&countLenBuff, 1);
@@ -363,14 +363,14 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     char *countBuffPtr = countBuff;
                     countBuffPtr += (8 - countLen);
                     pFile.read(countBuffPtr, countLen);
-                    memcpy(&count, countBuff, 8);
-                    count = PCH_SwapInt64BigToHost(count);
+                    memcpy(&charCount, countBuff, 8);
+                    charCount = PCH_SwapInt64BigToHost(charCount);
                 }
                 
                 // read in 2 bytes at a time, converting from Big-endian each time, and appeding the result to the resultString
                 uint16_t wcharBuff;
                 wstring resultString(L"");
-                for (int i=0; i<count; i++)
+                for (int i=0; i<charCount; i++)
                 {
                     pFile.read((char *)&wcharBuff, 2);
                     
@@ -381,9 +381,9 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     resultString += nextChar;
                 }
                 
-                auto result = new wstring(resultString, count);
+                auto result = new wstring(resultString, charCount);
                 
-                this->objectArray.push_back(PCH_PList_Entry(unicodeStringType, count, result));
+                this->objectArray.push_back(PCH_PList_Entry(unicodeStringType, charCount, result));
                 
                 break;
             }
@@ -444,7 +444,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 
                 auto result = new vector<int64_t>(values);
                 
-                this->objectArray.push_back(PCH_PList_Entry(obType, count * sizeof(int64_t), result));
+                this->objectArray.push_back(PCH_PList_Entry(obType, count, result));
                 
                 break;
             }
@@ -503,7 +503,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     result->push_back(nextEntry);
                 }
                 
-                this->objectArray.push_back(PCH_PList_Entry(dictType, count * sizeof(PCH_PList_Dict), result));
+                this->objectArray.push_back(PCH_PList_Entry(dictType, count, result));
                 
                 break;
             }
@@ -562,6 +562,7 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
         {
             result->valueType = PCH_PList_Value::pch_value_type::Date;
             result->value.dateValue = *(double*)(entry->data);
+            
             break;
         }
             
@@ -569,6 +570,7 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
         {
             result->valueType = PCH_PList_Value::pch_value_type::Double;
             result->value.doubleValue = *(double*)(entry->data);
+            
             break;
         }
             
@@ -578,6 +580,94 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
             char *bytePtr = (char *)entry->data;
             // this method comes from the "Initializing from an array" part of https://www.geeksforgeeks.org/initialize-a-vector-in-cpp-different-ways/
             result->value.dataValue = new vector<char>(bytePtr, bytePtr+entry->dataSize);
+            
+            break;
+        }
+            
+        case asciiStringType:
+        {
+            result->valueType = PCH_PList_Value::pch_value_type::AsciiString;
+            result->value.asciiStringValue = new string((char *)entry->data, entry->dataSize);
+            
+            break;
+        }
+        
+        case unicodeStringType:
+        {
+            result->valueType = PCH_PList_Value::pch_value_type::UnicodeString;
+            result->value.uniStringValue = new wstring((wchar_t *)entry->data, entry->dataSize);
+            
+            break;
+        }
+            
+        case uidType:
+        {
+            result->valueType = PCH_PList_Value::pch_value_type::Uid;
+            char *bytePtr = (char *)entry->data;
+            // this method comes from the "Initializing from an array" part of https://www.geeksforgeeks.org/initialize-a-vector-in-cpp-different-ways/
+            result->value.uidValue = new vector<char>(bytePtr, bytePtr+entry->dataSize);
+            
+            break;
+        }
+            
+        case arrayType:
+        {
+            result->valueType = PCH_PList_Value::pch_value_type::Array;
+            
+            result->value.arrayValue = new vector<PCH_PList_Value *>();
+            
+            vector<int64_t> indices = *(vector<int64_t> *)entry->data;
+            
+            for (int i=0; i<entry->dataSize; i++)
+            {
+                PCH_PList_Entry nextEntry = this->objectArray[indices[i]];
+                
+                result->value.arrayValue->push_back(GetValue(&nextEntry));
+            }
+            
+            break;
+        }
+            
+        case setType:
+        {
+            result->valueType = PCH_PList_Value::pch_value_type::Set;
+            
+            result->value.setValue = new vector<PCH_PList_Value *>();
+            
+            vector<int64_t> indices = *(vector<int64_t> *)entry->data;
+            
+            for (int i=0; i<entry->dataSize; i++)
+            {
+                PCH_PList_Entry nextEntry = this->objectArray[indices[i]];
+                
+                result->value.setValue->push_back(GetValue(&nextEntry));
+            }
+            
+            break;
+        }
+            
+        case dictType:
+        {
+            result->valueType = PCH_PList_Value::pch_value_type::Dict;
+            
+            result->value.dictValue = new vector<PCH_PList_Value::dictStruct>();
+            
+            // unlike the other collection types, the data field does not hold indices into the objectArray, but the key/value pairs (as PCH_PList_Dict's) - those pairs ARE indices into the object array
+            vector<PCH_PList_Dict> dict = *(vector<PCH_PList_Dict> *)entry->data;
+            
+            for (int i=0; i<entry->dataSize; i++)
+            {
+                PCH_PList_Entry keyEntry = this->objectArray[dict[i].keyOffset];
+                PCH_PList_Entry valEntry = this->objectArray[dict[i].valueOffset];
+                 
+                PCH_PList_Value::dictStruct tDict;
+                tDict.key = GetValue(&keyEntry);
+                tDict.val = GetValue(&valEntry);
+                
+                result->value.dictValue->push_back(tDict);
+            }
+            
+            break;
         }
             
         default:

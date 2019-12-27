@@ -148,6 +148,12 @@ struct PCH_PList_Value
 {
     enum pch_value_type {Null, Bool, Int, Double, Date, Data, AsciiString, UnicodeString, Uid, Array, Set, Dict} valueType;
     
+    struct dictStruct
+    {
+        PCH_PList_Value *key;
+        PCH_PList_Value *val;
+    };
+    
     union pch_value
     {
         bool boolValue;
@@ -158,9 +164,9 @@ struct PCH_PList_Value
         string *asciiStringValue;
         wstring *uniStringValue;
         vector<char> *uidValue;
-        vector<PCH_PList_Value> *arrayValue;
-        set<PCH_PList_Value> *setValue;
-        map<PCH_PList_Value, PCH_PList_Value> *dictValue;
+        vector<PCH_PList_Value *> *arrayValue;
+        vector<PCH_PList_Value *> *setValue;
+        vector<dictStruct> *dictValue;
         
     } value;
     
