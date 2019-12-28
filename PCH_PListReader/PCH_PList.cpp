@@ -62,7 +62,7 @@ PCH_PList::PCH_PList()
 
 PCH_PList::PCH_PList(string pathName)
 {
-    this->isValid = this->InitializeWithFile(pathName);
+    this->isValid = (this->InitializeWithFile(pathName) == noError);
 }
 
 PCH_PList::~PCH_PList()
@@ -529,8 +529,6 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
     cout << "Done reading objects\n";
     
     this->root = GetValue(this->objectArray[0]);
-    
-    this->isValid = true;
     
     return noError;
 }
