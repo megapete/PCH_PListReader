@@ -604,9 +604,9 @@ void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int numT
             
         case PCH_PList_Value::AsciiString:
         {
-            string check = *(node->value.asciiStringValue);
-            char *cstr = new char[node->value.asciiStringValue->size() + 1];
-            strcpy(cstr, node->value.asciiStringValue->c_str());
+            // string check = *(node->value.asciiStringValue);
+            // char *cstr = new char[node->value.asciiStringValue->size() + 1];
+            // strcpy(cstr, node->value.asciiStringValue->c_str());
             
             outStream << indentSpaces << "<ascii-string>" << endl;
             
@@ -793,7 +793,7 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
         case asciiStringType:
         {
             result->valueType = PCH_PList_Value::pch_value_type::AsciiString;
-            result->value.asciiStringValue = new string((char *)entry->data, entry->dataSize);
+            result->value.asciiStringValue = new string(*(string *)entry->data);
             
             break;
         }
@@ -801,7 +801,7 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
         case unicodeStringType:
         {
             result->valueType = PCH_PList_Value::pch_value_type::UnicodeString;
-            result->value.uniStringValue = new wstring((wchar_t *)entry->data, entry->dataSize);
+            result->value.uniStringValue = new wstring(*(wstring *)entry->data);
             
             break;
         }
