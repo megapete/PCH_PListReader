@@ -59,9 +59,7 @@ TRAILER (32 bytes)
 
 #include <iostream>
 #include <string>
-#include <map>
 #include <vector>
-#include <set>
 
 #include "PCH_NumericManipulations.h"
 
@@ -122,7 +120,7 @@ public:
     // buffer to hold the 8-byte header
     char headerBuffer[PCH_PLIST_HEADER_LENGTH];
     
-    // the root dictionary of the plist
+    // the root of the plist (usually a dictionary)
     PCH_PList_Value *root;
     
     // The number of spaces per "indent" (used by the TraversePlist() call)
@@ -156,6 +154,7 @@ struct PCH_PList_Value
 {
     enum pch_value_type {Null, Bool, Int, Double, Date, Data, AsciiString, UnicodeString, Uid, Array, Set, Dict} valueType;
     
+    // dictionaries are saved as vectors of distStructs (defined here)
     struct dictStruct
     {
         PCH_PList_Value *key;

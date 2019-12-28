@@ -70,7 +70,7 @@ PCH_DoubleBigEndian PCH_SwapDoubleHostToBig(double x);
 float PCH_SwapFloatBigToHost(PCH_FloatBigEndian x);
 double PCH_SwapDoubleBigToHost(PCH_DoubleBigEndian x);
 
-// close the 'extern "C" clause from above (for C++)
+// close the 'extern "C" clause from above (for C++ only)
 #ifdef __cplusplus
 }
 #endif

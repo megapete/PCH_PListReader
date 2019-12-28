@@ -36,7 +36,7 @@ int main(int argc, const char * argv[]) {
     {
         ofstream outFile;
         
-        outFile.open (argv[2], std::ofstream::out | std::ofstream::app);
+        outFile.open (argv[2], std::ofstream::out | std::ofstream::trunc);
         
         inplist.TraversePlist(outFile);
         
