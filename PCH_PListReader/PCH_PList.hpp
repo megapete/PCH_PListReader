@@ -6,7 +6,7 @@
 //  Copyright © 2019 Peter Huber. All rights reserved.
 //
 
-// A C++ class to encapsulate a binary ".plist" file. While a plist file is often represented as a text file in XML format, this class is NOT designed to work with text-based XML files. The layout of a binary plist file is defined below (from https://opensource.apple.com/source/CF/CF-550/CFBinaryPList.c ). Note that all numerical references contained in the file are in big-endian form, which requires a conversion to small-endian for most modern computer systems (basically, all PCs and all Intel-based Macs). A lot of the other info used here comes from https://medium.com/@karaiskc/understanding-apples-binary-property-list-format-281e6da00dbd
+// A C++ class to encapsulate a binary ".plist" file. While a plist file is often represented as a text file in XML format, this class is NOT designed to work with text-based plist (XML) files. The layout of a binary plist file is defined below (from https://opensource.apple.com/source/CF/CF-550/CFBinaryPList.c ). Note that all numerical references contained in the file are in big-endian form, which requires a conversion to small-endian for most modern computer systems (basically, all PCs and all Intel-based Macs). A lot of the other info used here comes from https://medium.com/@karaiskc/understanding-apples-binary-property-list-format-281e6da00dbd
 
 /* BINARY PLIST FILE FORMAT
  
@@ -78,7 +78,7 @@ struct PCH_PList_Value;
 
 
 
-// The PCH_PList class, which is the C++ encapsulation of a binary plist file. The usual way to use the class is by using the constructor that takes a file path as an argument, after which the class will be populated (assuming that the file is a valid binary plist file). The other way is to create an instance using the default constructor (teh one without arguments), then immediately call InitializeWithFile().
+// The PCH_PList class, which is the C++ encapsulation of a binary plist file. The usual way to use the class is by using the constructor that takes a file path as an argument, after which the class will be populated (assuming that the file is a valid binary plist file). The other way is to create an instance using the default constructor (the one without arguments), then  call InitializeWithFile() before using the instance.
 
 class PCH_PList
 {
@@ -125,6 +125,9 @@ public:
     // the root dictionary of the plist
     PCH_PList_Value *root;
     
+    // The number of spaces per "indent" (used by the TraversePlist() call)
+    int numSpacesPerTab = 4;
+    
     // constructors & destructor
     PCH_PList();
     PCH_PList(string pathName);
@@ -145,10 +148,10 @@ private:
     // methods
     PCH_PList_Value *GetValue(PCH_PList_Entry *entry);
     
-    void TraverseNode(ostream& outStream, PCH_PList_Value *node, int indent);
+    void TraverseNode(ostream& outStream, PCH_PList_Value *node, int numTabs);
 };
 
-// The plist file is converted into a list of actual objects, each of which is saved as the following structure. Using this method (a type specifier and a union of possible types, only one of which will actually be used by the object) lets us create concrete objects instead of using void pointers and a bunch of ugly casting.
+// The plist file is converted into a list of actual objects, each of which is saved as the following structure. Using this method (a type specifier and a union of possible types, only one of which will actually be used by the object) lets us create concrete-named objects instead of using void pointers and a bunch of ugly casting.
 struct PCH_PList_Value
 {
     enum pch_value_type {Null, Bool, Int, Double, Date, Data, AsciiString, UnicodeString, Uid, Array, Set, Dict} valueType;
@@ -182,12 +185,12 @@ struct PCH_PList_Value
     ~PCH_PList_Value();
 };
 
-// Each object in the file is converted into a PCH_PList_Entry for subsequent local storage
+// Each object in the file is stored into a PCH_PList_Entry for subsequent processing
 struct PCH_PList_Entry
 {
     PCH_PList::ObjectType entryType; // all object types have this ivar set
-    size_t dataSize; // only those entries whose size is non-trivial need to have this ivar set
-    void *data; // a pointer to the actual data for the type (this should have been set using the 'new' operator so that it can be deleted later)
+    size_t dataSize; // only those entries whose size is non-fixed need to have this ivar set
+    void *data; // a pointer to the actual data for the type (this is set using the 'new' operator so that it can be deleted in the destructor)
     
     // constructor
     PCH_PList_Entry(PCH_PList::ObjectType entryType, size_t dataSize, void *data) : entryType(entryType), dataSize(dataSize), data(data) {}
@@ -196,7 +199,7 @@ struct PCH_PList_Entry
     virtual ~PCH_PList_Entry();
 };
 
-// FOr dictionaries (maps in C++), we need to store both a key and a value offset
+// For dictionaries, we need to store both a key and a value offset, so create a struct for it
 struct PCH_PList_Dict
 {
     uint64_t keyOffset;

@@ -139,7 +139,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
     // Iterate through all the objects in the file. Basically, we read "objects" until we reach the beginning of the offset table (whose position we have already extracted from the file in the section above).
     while (pFile.tellg() < offset_table_start)
     {
-        cout << "Filepos: " << pFile.tellg() << endl;
+        // cout << "Filepos: " << pFile.tellg() << endl;
         // read the next marker byte
         char mBuff;
         pFile.read(&mBuff, 1);
@@ -530,6 +530,8 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
     
     this->root = GetValue(this->objectArray[0]);
     
+    this->isValid = true;
+    
     return noError;
 }
 
@@ -537,14 +539,15 @@ void PCH_PList::TraversePlist(ostream& outStream)
 {
     outStream << "<plist>" << endl;
     
-    TraverseNode(outStream, this->root, 4);
+    TraverseNode(outStream, this->root, 1);
     
     outStream << "</plist>" << endl;
 }
 
-void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int indent)
+void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int numTabs)
 {
-    string indentSpaces = string(indent, ' ');
+    string tabSpaces = string(this->numSpacesPerTab, ' ');
+    string indentSpaces = string(numTabs * this->numSpacesPerTab, ' ');
     
     switch (node->valueType)
     {
@@ -554,14 +557,170 @@ void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int inde
             
             if (node->value.boolValue)
             {
-                outStream << indentSpaces << "    " << "TRUE" << endl;
+                outStream << indentSpaces << tabSpaces << "TRUE" << endl;
             }
             else
             {
-                outStream << indentSpaces << "    " << "FALSE" << endl;
+                outStream << indentSpaces << tabSpaces << "FALSE" << endl;
             }
             
             outStream << indentSpaces << "</bool>" << endl;
+            
+            break;
+        }
+        
+        case PCH_PList_Value::Int:
+        {
+            outStream << indentSpaces << "<int>" << endl;
+            
+            outStream << indentSpaces << tabSpaces << node->value.intValue << endl;
+            
+            outStream << indentSpaces << "</int>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Double:
+        {
+            outStream << indentSpaces << "<double>" << endl;
+            
+            outStream << indentSpaces << tabSpaces << node->value.doubleValue << endl;
+            
+            outStream << indentSpaces << "</double>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Date:
+        {
+            outStream << indentSpaces << "<date>" << endl;
+            
+            outStream << indentSpaces << tabSpaces << node->value.dateValue << endl;
+            
+            outStream << indentSpaces << "</date>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::AsciiString:
+        {
+            string check = *(node->value.asciiStringValue);
+            char *cstr = new char[node->value.asciiStringValue->size() + 1];
+            strcpy(cstr, node->value.asciiStringValue->c_str());
+            
+            outStream << indentSpaces << "<ascii-string>" << endl;
+            
+            outStream << indentSpaces << tabSpaces << node->value.asciiStringValue->c_str() << endl;
+            
+            outStream << indentSpaces << "</ascii-string>" << endl;
+            
+            break;
+        }
+        
+        case PCH_PList_Value::UnicodeString:
+        {
+            outStream << indentSpaces << "<unicode-string>" << endl;
+            
+            outStream << indentSpaces << tabSpaces << node->value.uniStringValue->c_str() << endl;
+            
+            outStream << indentSpaces << "</unicode-string>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Data:
+        {
+            outStream << indentSpaces << "<data>" << endl;
+            
+            outStream << indentSpaces << tabSpaces;
+            
+            for (int i=0; i<node->value.dataValue->size(); i++)
+            {
+                outStream << hex << setfill('0') << setw(2) << node->value.dataValue->at(i);
+            }
+            
+            outStream << endl;
+            
+            outStream << indentSpaces << "</data>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Uid:
+        {
+            outStream << indentSpaces << "<UID>" << endl;
+            
+            outStream << indentSpaces << tabSpaces;
+            
+            for (int i=0; i<node->value.uidValue->size(); i++)
+            {
+                outStream << hex << setfill('0') << setw(2) << node->value.uidValue->at(i);
+            }
+            
+            outStream << endl;
+            
+            outStream << indentSpaces << "</UID>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Array:
+        {
+            outStream << indentSpaces << "<array>" << endl;
+            
+            int newTabs = numTabs + 1;
+            
+            for (int i=0; i<node->value.arrayValue->size(); i++)
+            {
+                TraverseNode(outStream, node->value.arrayValue->at(i), newTabs);
+            }
+            
+            outStream << indentSpaces << "</array>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Set:
+        {
+            outStream << indentSpaces << "<set>" << endl;
+            
+            int newTabs = numTabs + 1;
+            
+            for (int i=0; i<node->value.setValue->size(); i++)
+            {
+                TraverseNode(outStream, node->value.setValue->at(i), newTabs);
+            }
+            
+            outStream << indentSpaces << "</set>" << endl;
+            
+            break;
+        }
+            
+        case PCH_PList_Value::Dict:
+        {
+            outStream << indentSpaces << "<dict>" << endl;
+            
+            string keyValSpaces = indentSpaces + tabSpaces;
+            int newTabs = numTabs + 2;
+            
+            for (int i=0; i<node->value.dictValue->size(); i++)
+            {
+                PCH_PList_Value::dictStruct nextDictEntry = node->value.dictValue->at(i);
+                
+                outStream << keyValSpaces << "<key>" << endl;
+                
+                TraverseNode(outStream, nextDictEntry.key, newTabs);
+                
+                outStream << keyValSpaces << "</key>" << endl;
+                
+                outStream << keyValSpaces << "<value>" << endl;
+                
+                TraverseNode(outStream, nextDictEntry.val, newTabs);
+                
+                outStream << keyValSpaces << "</value>" << endl;
+            }
+            
+            outStream << indentSpaces << "</dict>" << endl;
             
             break;
         }

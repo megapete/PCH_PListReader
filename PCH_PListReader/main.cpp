@@ -32,5 +32,7 @@ int main(int argc, const char * argv[]) {
     
     PCH_PList test(filePath);
     
+    test.TraversePlist();
+    
     return 0;
 }
