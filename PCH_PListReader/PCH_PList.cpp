@@ -67,7 +67,10 @@ PCH_PList::PCH_PList(string pathName)
 
 PCH_PList::~PCH_PList()
 {
-    
+    for (int i=0; i<this->objectArray.size(); i++)
+    {
+        delete this->objectArray[i];
+    }
 }
 
 PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
@@ -136,6 +139,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
     // Iterate through all the objects in the file. Basically, we read "objects" until we reach the beginning of the offset table (whose position we have already extracted from the file in the section above).
     while (pFile.tellg() < offset_table_start)
     {
+        cout << "Filepos: " << pFile.tellg() << endl;
         // read the next marker byte
         char mBuff;
         pFile.read(&mBuff, 1);
@@ -155,19 +159,19 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
             {
                 if (lowNibble == 0x0)
                 {
-                    this->objectArray.push_back(PCH_PList_Entry(nullType, 0, NULL));
+                    this->objectArray.push_back(new PCH_PList_Entry(nullType, 0, NULL));
                 }
                 else if (lowNibble == 0x08)
                 {
-                    this->objectArray.push_back(PCH_PList_Entry(boolFalseType, 0, NULL));
+                    this->objectArray.push_back(new PCH_PList_Entry(boolFalseType, 0, NULL));
                 }
                 else if (lowNibble == 0x09)
                 {
-                    this->objectArray.push_back(PCH_PList_Entry(boolTrueType, 0, NULL));
+                    this->objectArray.push_back(new PCH_PList_Entry(boolTrueType, 0, NULL));
                 }
                 else if (lowNibble == 0x0F)
                 {
-                    this->objectArray.push_back(PCH_PList_Entry(fillType, 0, NULL));
+                    this->objectArray.push_back(new PCH_PList_Entry(fillType, 0, NULL));
                 }
                 else
                 {
@@ -208,7 +212,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     data = PCH_SwapInt64BigToHost(data);
                     // creata a new pointer with the converted data and add it to our object array
                     int64_t *dataPtr = new int64_t(data);
-                    this->objectArray.push_back(PCH_PList_Entry(int64Type, sizeof(int64_t), dataPtr));
+                    this->objectArray.push_back(new PCH_PList_Entry(int64Type, sizeof(int64_t), dataPtr));
                 }
                 
                 break;
@@ -240,7 +244,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     data = PCH_SwapFloatBigToHost(bigData);
                     // creata a new pointer with the converted data and add it to our object array
                     double *dataPtr = new double(data);
-                    this->objectArray.push_back(PCH_PList_Entry(doubleType, sizeof(double), dataPtr));
+                    this->objectArray.push_back(new PCH_PList_Entry(doubleType, sizeof(double), dataPtr));
                 }
                 else // must be double
                 {
@@ -252,7 +256,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     memcpy(&bigData, buffer, numberOfBytesToRead);
                     data = PCH_SwapDoubleBigToHost(bigData);
                     double *dataPtr = new double(data);
-                    this->objectArray.push_back(PCH_PList_Entry(doubleType, sizeof(double), dataPtr));
+                    this->objectArray.push_back(new PCH_PList_Entry(doubleType, sizeof(double), dataPtr));
                 }
                 
                 break;
@@ -270,7 +274,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 memcpy(&bigData, buffer, numberOfBytesToRead);
                 data = PCH_SwapDoubleBigToHost(bigData);
                 double *dataPtr = new double(data);
-                this->objectArray.push_back(PCH_PList_Entry(dateType, sizeof(double), dataPtr));
+                this->objectArray.push_back(new PCH_PList_Entry(dateType, sizeof(double), dataPtr));
                 
                 break;
             }
@@ -309,7 +313,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 char *cResult = new char[count];
                 pFile.read(cResult, count);
                 
-                this->objectArray.push_back(PCH_PList_Entry(dataType, count, cResult));
+                this->objectArray.push_back(new PCH_PList_Entry(dataType, count, cResult));
                 
                 break;
             }
@@ -335,12 +339,16 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     charCount = PCH_SwapInt64BigToHost(charCount);
                 }
                 
-                char cResult[charCount];
-                pFile.read(cResult, charCount);
+                char cResult[charCount+1];
+                cResult[charCount] = 0;
+                pFile.read(cResult, (int)charCount);
+                // cout << "Filepos: " << pFile.tellg() << endl;
 
-                auto result = new string(cResult, charCount);
+                string *result = new string(cResult);
                 
-                this->objectArray.push_back(PCH_PList_Entry(asciiStringType, charCount, result));
+                // cout << "The char array is " << cResult << endl << "The string is: " << *result << endl;
+                
+                this->objectArray.push_back(new PCH_PList_Entry(asciiStringType, charCount, result));
                 
                 break;
             }
@@ -383,7 +391,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 
                 auto result = new wstring(resultString, charCount);
                 
-                this->objectArray.push_back(PCH_PList_Entry(unicodeStringType, charCount, result));
+                this->objectArray.push_back(new PCH_PList_Entry(unicodeStringType, charCount, result));
                 
                 break;
             }
@@ -399,7 +407,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 char *cResult = new char[count];
                 pFile.read(cResult, count);
                 
-                this->objectArray.push_back(PCH_PList_Entry(uidType, count, cResult));
+                this->objectArray.push_back(new PCH_PList_Entry(uidType, count, cResult));
                 
                 break;
             }
@@ -444,7 +452,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 
                 auto result = new vector<int64_t>(values);
                 
-                this->objectArray.push_back(PCH_PList_Entry(obType, count, result));
+                this->objectArray.push_back(new PCH_PList_Entry(obType, count, result));
                 
                 break;
             }
@@ -503,7 +511,7 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                     result->push_back(nextEntry);
                 }
                 
-                this->objectArray.push_back(PCH_PList_Entry(dictType, count, result));
+                this->objectArray.push_back(new PCH_PList_Entry(dictType, count, result));
                 
                 break;
             }
@@ -520,10 +528,49 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
     
     cout << "Done reading objects\n";
     
-    
-    
+    this->root = GetValue(this->objectArray[0]);
     
     return noError;
+}
+
+void PCH_PList::TraversePlist(ostream& outStream)
+{
+    outStream << "<plist>" << endl;
+    
+    TraverseNode(outStream, this->root, 4);
+    
+    outStream << "</plist>" << endl;
+}
+
+void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int indent)
+{
+    string indentSpaces = string(indent, ' ');
+    
+    switch (node->valueType)
+    {
+        case PCH_PList_Value::Bool:
+        {
+            outStream << indentSpaces << "<bool>" << endl;
+            
+            if (node->value.boolValue)
+            {
+                outStream << indentSpaces << "    " << "TRUE" << endl;
+            }
+            else
+            {
+                outStream << indentSpaces << "    " << "FALSE" << endl;
+            }
+            
+            outStream << indentSpaces << "</bool>" << endl;
+            
+            break;
+        }
+            
+        default:
+        {
+            break;
+        }
+    }
 }
 
 PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
@@ -620,9 +667,9 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
             
             for (int i=0; i<entry->dataSize; i++)
             {
-                PCH_PList_Entry nextEntry = this->objectArray[indices[i]];
+                PCH_PList_Entry *nextEntry = this->objectArray[indices[i]];
                 
-                result->value.arrayValue->push_back(GetValue(&nextEntry));
+                result->value.arrayValue->push_back(GetValue(nextEntry));
             }
             
             break;
@@ -638,9 +685,9 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
             
             for (int i=0; i<entry->dataSize; i++)
             {
-                PCH_PList_Entry nextEntry = this->objectArray[indices[i]];
+                PCH_PList_Entry *nextEntry = this->objectArray[indices[i]];
                 
-                result->value.setValue->push_back(GetValue(&nextEntry));
+                result->value.setValue->push_back(GetValue(nextEntry));
             }
             
             break;
@@ -657,12 +704,12 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
             
             for (int i=0; i<entry->dataSize; i++)
             {
-                PCH_PList_Entry keyEntry = this->objectArray[dict[i].keyOffset];
-                PCH_PList_Entry valEntry = this->objectArray[dict[i].valueOffset];
+                PCH_PList_Entry *keyEntry = this->objectArray[dict[i].keyOffset];
+                PCH_PList_Entry *valEntry = this->objectArray[dict[i].valueOffset];
                  
                 PCH_PList_Value::dictStruct tDict;
-                tDict.key = GetValue(&keyEntry);
-                tDict.val = GetValue(&valEntry);
+                tDict.key = GetValue(keyEntry);
+                tDict.val = GetValue(valEntry);
                 
                 result->value.dictValue->push_back(tDict);
             }
@@ -672,6 +719,8 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
             
         default:
         {
+            cout << "Unimplemented marker!" << endl;
+            
             break;
         }
     }

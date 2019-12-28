@@ -133,14 +133,19 @@ public:
     // Function to initialize the class using the file at 'filepath'. The function returns an PCH_PList::ErrorType, which gives a bit of information as to why the function failed (if the call is successful, it returns PCH_PList::ErrorType::noError).
     ErrorType InitializeWithFile(string filePath);
     
+    // Function to traverse the PCH_PList. This function can be used to view a textual representation of the plist file in a "pseudo-XML" style.
+    void TraversePlist(ostream& outStream = cout);
+    
 private:
     
     // ivars
     // the basic object array for the objects represented in the file
-    vector<PCH_PList_Entry> objectArray;
+    vector<PCH_PList_Entry *> objectArray;
     
     // methods
     PCH_PList_Value *GetValue(PCH_PList_Entry *entry);
+    
+    void TraverseNode(ostream& outStream, PCH_PList_Value *node, int indent);
 };
 
 // The plist file is converted into a list of actual objects, each of which is saved as the following structure. Using this method (a type specifier and a union of possible types, only one of which will actually be used by the object) lets us create concrete objects instead of using void pointers and a bunch of ugly casting.
