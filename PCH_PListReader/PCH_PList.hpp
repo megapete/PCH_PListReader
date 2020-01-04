@@ -121,7 +121,7 @@ public:
     char headerBuffer[PCH_PLIST_HEADER_LENGTH];
     
     // the root of the plist (usually a dictionary)
-    PCH_PList_Value *root;
+    PCH_PList_Value *plistRoot;
     
     // The number of spaces per "indent" (used by the TraversePlist() call)
     int numSpacesPerTab = 4;
@@ -170,7 +170,7 @@ struct PCH_PList_Value
         vector<char> *dataValue;
         string *asciiStringValue;
         wstring *uniStringValue;
-        vector<char> *uidValue;
+        int64_t uidValue;
         vector<PCH_PList_Value *> *arrayValue;
         vector<PCH_PList_Value *> *setValue;
         vector<dictStruct> *dictValue;

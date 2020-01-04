@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D370C47123AD5EAE004A79AF /* PCH_NumericManipulations.c in Sources */ = {isa = PBXBuildFile; fileRef = D370C47023AD5EAE004A79AF /* PCH_NumericManipulations.c */; };
+		D37D790723BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D37D790523BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.cpp */; };
 		D3CC52D723AAF1390099922E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3CC52D623AAF1390099922E /* main.cpp */; };
 		D3CC52E023AAF6BA0099922E /* PCH_PList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D3CC52DE23AAF6BA0099922E /* PCH_PList.cpp */; };
 /* End PBXBuildFile section */
@@ -27,6 +28,8 @@
 /* Begin PBXFileReference section */
 		D370C46F23AD5EAE004A79AF /* PCH_NumericManipulations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PCH_NumericManipulations.h; sourceTree = "<group>"; };
 		D370C47023AD5EAE004A79AF /* PCH_NumericManipulations.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = PCH_NumericManipulations.c; sourceTree = "<group>"; };
+		D37D790523BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PCH_NSKeyedArchiver_Analyzer.cpp; sourceTree = "<group>"; };
+		D37D790623BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PCH_NSKeyedArchiver_Analyzer.hpp; sourceTree = "<group>"; };
 		D3CC52D323AAF1390099922E /* PCH_PListReader */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PCH_PListReader; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3CC52D623AAF1390099922E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		D3CC52DE23AAF6BA0099922E /* PCH_PList.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PCH_PList.cpp; sourceTree = "<group>"; };
@@ -64,6 +67,8 @@
 			isa = PBXGroup;
 			children = (
 				D3CC52D623AAF1390099922E /* main.cpp */,
+				D37D790623BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.hpp */,
+				D37D790523BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.cpp */,
 				D3CC52DF23AAF6BA0099922E /* PCH_PList.hpp */,
 				D3CC52DE23AAF6BA0099922E /* PCH_PList.cpp */,
 				D370C46F23AD5EAE004A79AF /* PCH_NumericManipulations.h */,
@@ -131,6 +136,7 @@
 			files = (
 				D3CC52E023AAF6BA0099922E /* PCH_PList.cpp in Sources */,
 				D3CC52D723AAF1390099922E /* main.cpp in Sources */,
+				D37D790723BBDA70008F8D95 /* PCH_NSKeyedArchiver_Analyzer.cpp in Sources */,
 				D370C47123AD5EAE004A79AF /* PCH_NumericManipulations.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

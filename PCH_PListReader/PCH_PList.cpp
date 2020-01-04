@@ -57,7 +57,7 @@
 PCH_PList::PCH_PList()
 {
     this->isValid = false;
-    this->root = NULL;
+    this->plistRoot = NULL;
 }
 
 PCH_PList::PCH_PList(string pathName)
@@ -398,17 +398,28 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
                 
             // UID
             // The UID is the "User ID" on Mac OSX systems, but I don't understand why this would ever be useful information to save to a file. In any case, we take care of it.
+            // UPDATE: After analyzing the Apple-produced code in https://opensource.apple.com/source/CF/CF-550/CFBinaryPList.c, particularly the function _appendUID, it appears that the UID is an integer (max size of 64 bits) and that the number as represented in the plist file is indeed in Big-endian format, like other numbers.
             case 0x08:
             {
                 // unlike just about every other type of object, the number of bytes to read the UID is (lowNibble + 1)
-                int64_t count = (int64_t)lowNibble + 1;
+                int64_t numberOfBytesToRead = (int64_t)lowNibble + 1;
                 
-                // The only documentation that I could find regarding the UID in a plist file is very unclear as to whether a) it's a number and b) if it is encoded as Big-endian. This code assumes a char array and ignores endian-ness.
-                char *cResult = new char[count];
-                pFile.read(cResult, count);
-                
-                this->objectArray.push_back(new PCH_PList_Entry(uidType, count, cResult));
-                
+                // initialize an 8-byte buffer to all zeros
+                char buffer[8] = {0};
+                // get a pointer to the start of the buffer
+                char *buffPtr = buffer;
+                // we only want to copy as many bytes as specified by the lowNibble, so we advance the pointer to "pad" the number with zeroes
+                buffPtr += (8 - numberOfBytesToRead);
+                pFile.read(buffPtr, numberOfBytesToRead);
+                // copy the bytes we just read into an int64_t type
+                int64_t data;
+                memcpy(&data, buffer, 8);
+                // data is in Big-endian, so convert it as necessary
+                data = PCH_SwapInt64BigToHost(data);
+                // creata a new pointer with the converted data and add it to our object array
+                int64_t *dataPtr = new int64_t(data);
+                this->objectArray.push_back(new PCH_PList_Entry(uidType, sizeof(int64_t), dataPtr));
+                                
                 break;
             }
                 
@@ -526,9 +537,11 @@ PCH_PList::ErrorType PCH_PList::InitializeWithFile(string filePath)
         }
     }
     
-    cout << "Done reading objects\n";
+    cout << "Done reading objects" << endl << endl;
     
-    this->root = GetValue(this->objectArray[0]);
+    this->plistRoot = GetValue(this->objectArray[0]);
+    
+    cout << "Done creating plist tree" << endl;
     
     return noError;
 }
@@ -537,7 +550,7 @@ void PCH_PList::TraversePlist(ostream& outStream)
 {
     outStream << "<plist>" << endl;
     
-    TraverseNode(outStream, this->root, 1);
+    TraverseNode(outStream, this->plistRoot, 1);
     
     outStream << "</plist>" << endl;
 }
@@ -602,10 +615,6 @@ void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int numT
             
         case PCH_PList_Value::AsciiString:
         {
-            // string check = *(node->value.asciiStringValue);
-            // char *cstr = new char[node->value.asciiStringValue->size() + 1];
-            // strcpy(cstr, node->value.asciiStringValue->c_str());
-            
             outStream << indentSpaces << "<ascii-string>" << endl;
             
             outStream << indentSpaces << tabSpaces << node->value.asciiStringValue->c_str() << endl;
@@ -648,14 +657,7 @@ void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int numT
         {
             outStream << indentSpaces << "<UID>" << endl;
             
-            outStream << indentSpaces << tabSpaces;
-            
-            for (int i=0; i<node->value.uidValue->size(); i++)
-            {
-                outStream << hex << setfill('0') << setw(2) << node->value.uidValue->at(i);
-            }
-            
-            outStream << endl;
+            outStream << indentSpaces << tabSpaces << node->value.uidValue << endl;
             
             outStream << indentSpaces << "</UID>" << endl;
             
@@ -704,6 +706,12 @@ void PCH_PList::TraverseNode(ostream& outStream, PCH_PList_Value *node, int numT
             for (int i=0; i<node->value.dictValue->size(); i++)
             {
                 PCH_PList_Value::dictStruct nextDictEntry = node->value.dictValue->at(i);
+                
+                // used for analyzing NSKeyedArchive plists
+                if (nextDictEntry.key->valueType != PCH_PList_Value::pch_value_type::AsciiString)
+                {
+                    cerr << "Got a non-string dictionary key" << endl;
+                }
                 
                 outStream << keyValSpaces << "<key>" << endl;
                 
@@ -807,9 +815,7 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
         case uidType:
         {
             result->valueType = PCH_PList_Value::pch_value_type::Uid;
-            char *bytePtr = (char *)entry->data;
-            // this method comes from the "Initializing from an array" part of https://www.geeksforgeeks.org/initialize-a-vector-in-cpp-different-ways/
-            result->value.uidValue = new vector<char>(bytePtr, bytePtr+entry->dataSize);
+            result->value.uidValue = *(int64_t*)(entry->data);
             
             break;
         }
@@ -906,12 +912,6 @@ PCH_PList_Value::~PCH_PList_Value()
         case UnicodeString:
         {
             delete this->value.uniStringValue;
-            break;
-        }
-            
-        case Uid:
-        {
-            delete this->value.uidValue;
             break;
         }
             
