@@ -19,6 +19,9 @@
 
 using namespace std;
 
+// This appears to be the only value allowed by Apple
+#define PCH_NSKEYEDARCHIVER_VERSION  100000
+
 enum PCH_UnarchivedType
 {
     Undefined,
@@ -36,7 +39,17 @@ enum PCH_UnarchivedType
     Struct
 };
 
-struct PCH_UnarchivedStruct
+struct PCH_UnarchivedBase
+{
+    PCH_UnarchivedType type;
+    
+    PCH_UnarchivedBase() {this->type = Undefined;}
+    
+    string TypeName();
+};
+
+// I believe that all objects that can be serialized by NSKeyedArchive have to be _classes_, but I'm not 100% sure, so I'll allow the possibility for future expansion by allowing the definition of structs too.
+struct PCH_UnarchivedStruct : PCH_UnarchivedBase
 {
     // the name of the struct
     string name;
@@ -47,45 +60,58 @@ struct PCH_UnarchivedStruct
     // a struct to define each member
     struct memberDef
     {
-        PCH_UnarchivedType type;
+        PCH_UnarchivedBase baseType;
         string name;
-        
-        memberDef() {this->type = Undefined; name = "";}
     };
     
     // the vector of struct members
     vector<memberDef> members;
     
-    PCH_UnarchivedStruct() {this->typeName = "Struct";}
+    PCH_UnarchivedStruct() {}
     virtual ~PCH_UnarchivedStruct();
-    
-    string TypeName() {return this->typeName;}
-    
-protected:
-    
-    string typeName;
 };
 
 struct PCH_UnarchivedClass : PCH_UnarchivedStruct
 {
-    PCH_UnarchivedClass() {this->typeName = "Class";}
+    PCH_UnarchivedClass() {}
+    virtual ~PCH_UnarchivedClass();
 };
 
 struct PCH_UnarchivedMember
 {
-    PCH_UnarchivedStruct *parentStruct;
+    PCH_UnarchivedBase *parent;
     
     void *value;
+    
     
 };
 
 class PCH_UnarchivedModel
 {
+public:
+    
     bool isValid;
     
     PCH_PList_Value *pchPlistRoot;
     
     PCH_UnarchivedModel(PCH_PList_Value *root);
+    
+private:
+    
+    int version; // always 100000
+    
+    vector<PCH_PList_Value *> objects;
+    
+    // struct definitions
+    vector<PCH_UnarchivedStruct> structs;
+    
+    // class definitions
+    vector<PCH_UnarchivedClass> classes;
+    
+    // members
+    vector<PCH_UnarchivedMember> members;
+    
+    
 };
 
 #endif /* PCH_NSKeyedArchiver_Analyzer_hpp */

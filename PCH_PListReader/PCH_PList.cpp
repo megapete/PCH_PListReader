@@ -891,6 +891,27 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
     return result;
 }
 
+PCH_PList_Value *PCH_PList_Value::ValueForStringKey(vector<dictStruct> *dict, string &key)
+{
+    for (int i=0; i<dict->size(); i++)
+    {
+        dictStruct nextEntry = dict->at(i);
+        
+        if (nextEntry.key->valueType == PCH_PList_Value::AsciiString)
+        {
+            string keyToCheck = *nextEntry.key->value.asciiStringValue;
+            
+            if (keyToCheck.compare(key) == 0)
+            {
+                return nextEntry.val;
+            }
+        }
+    }
+    
+    // if we get here, there was no match, return NULL
+    return nullptr;
+}
+
 
 // PCH_PList_Value may contain pointers in its value field, so delete them
 PCH_PList_Value::~PCH_PList_Value()

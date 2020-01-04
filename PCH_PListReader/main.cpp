@@ -15,6 +15,7 @@
 
 
 #include "PCH_PList.hpp"
+#include "PCH_NSKeyedArchiver_Analyzer.hpp"
 
 using namespace std;
 
@@ -31,6 +32,8 @@ int main(int argc, const char * argv[]) {
         cerr << "Could not create PCH_Plist instance!!!";
         return 1;
     }
+    
+    PCH_UnarchivedModel testModel(inplist.plistRoot);
     
     if (argc > 2)
     {

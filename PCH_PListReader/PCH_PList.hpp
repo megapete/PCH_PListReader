@@ -161,6 +161,8 @@ struct PCH_PList_Value
         PCH_PList_Value *val;
     };
     
+    static PCH_PList_Value *ValueForStringKey(vector<dictStruct> *dict, string &key);
+    
     union pch_value
     {
         bool boolValue;
