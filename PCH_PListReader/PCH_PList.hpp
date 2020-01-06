@@ -161,7 +161,9 @@ struct PCH_PList_Value
         PCH_PList_Value *val;
     };
     
-    static PCH_PList_Value *ValueForStringKey(vector<dictStruct> *dict, string &key);
+    static PCH_PList_Value *ValueForStringKey(const vector<dictStruct> &dict, const string &key);
+    
+    static void PrintKeys(const vector<dictStruct> &dict);
     
     union pch_value
     {

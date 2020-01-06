@@ -891,11 +891,11 @@ PCH_PList_Value *PCH_PList::GetValue(PCH_PList_Entry *entry)
     return result;
 }
 
-PCH_PList_Value *PCH_PList_Value::ValueForStringKey(vector<dictStruct> *dict, string &key)
+PCH_PList_Value *PCH_PList_Value::ValueForStringKey(const vector<dictStruct> &dict, const string &key)
 {
-    for (int i=0; i<dict->size(); i++)
+    for (int i=0; i<dict.size(); i++)
     {
-        dictStruct nextEntry = dict->at(i);
+        dictStruct nextEntry = dict.at(i);
         
         if (nextEntry.key->valueType == PCH_PList_Value::AsciiString)
         {
@@ -910,6 +910,23 @@ PCH_PList_Value *PCH_PList_Value::ValueForStringKey(vector<dictStruct> *dict, st
     
     // if we get here, there was no match, return NULL
     return nullptr;
+}
+
+void PCH_PList_Value::PrintKeys(const vector<dictStruct> &dict)
+{
+    for (int i=0; i<dict.size(); i++)
+    {
+        dictStruct nextEntry = dict.at(i);
+        
+        if (nextEntry.key->valueType == PCH_PList_Value::AsciiString)
+        {
+            string nextKey = *nextEntry.key->value.asciiStringValue;
+            
+            cout << "Key#" << i << ": " << nextKey.c_str() << endl;
+        }
+    }
+    
+    cout << endl;
 }
 
 

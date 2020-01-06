@@ -163,14 +163,80 @@ PCH_UnarchivedModel::PCH_UnarchivedModel(PCH_PList_Value *root)
         return;
     }
     
-    int nextIndexToOpen = (int)topDict.val->value.uidValue;
+    int topIndex = (int)topDict.val->value.uidValue;
     
+    this->rootItem = this->ExpandObjectAtIndex(topIndex);
     
-    
-    // if we get to the end, we have successfully decoded the file
-    this->isValid = true;
-    
-    // save the original plist pointer so we can re-accessit if needed
+    // save the original plist pointer so we can re-access it if needed
     this->pchPlistRoot = root;
 }
 
+
+PCH_UnarchivedBase *PCH_UnarchivedModel::ExpandObjectAtIndex(const int index)
+{
+    PCH_PList_Value *item = this->objects.at(index);
+    
+    return this->ExpandValue(item);
+}
+
+
+PCH_UnarchivedBase *PCH_UnarchivedModel::ExpandValue(PCH_PList_Value *plistValue)
+{
+    PCH_PList_Value::pch_value_type vType = plistValue->valueType;
+    
+    if (vType == PCH_PList_Value::Dict)
+    {
+        vector<PCH_PList_Value::dictStruct> theDict = *plistValue->value.dictValue;
+        
+        PCH_PList_Value *classPtr = PCH_PList_Value::ValueForStringKey(theDict, "$class");
+        if (classPtr != nullptr)
+        {
+            // this is a class definition, so hand off
+            return this->ExpandClassDefinitionWith(theDict);
+        }
+    }
+    else if (vType == PCH_PList_Value::Int)
+    {
+        PCH_UnarchivedMember newMember;
+    }
+    
+    return nullptr;
+}
+
+
+PCH_UnarchivedClass *PCH_UnarchivedModel::ExpandClassDefinitionWith(const vector<PCH_PList_Value::dictStruct> dict)
+{
+    PCH_UnarchivedClass *result = new PCH_UnarchivedClass();
+    
+    // start out by creating the basic definition of the class
+    int classUID = (int)PCH_PList_Value::ValueForStringKey(dict, "$class")->value.uidValue;
+    
+    vector<PCH_PList_Value::dictStruct> defDict = *this->objects.at(classUID)->value.dictValue;
+    
+    result->name = *PCH_PList_Value::ValueForStringKey(defDict, "classname")->value.asciiStringValue;
+    
+    vector<PCH_PList_Value *> superArray = *PCH_PList_Value::ValueForStringKey(defDict, "classname")->value.arrayValue;
+    
+    for (int i=0; i<superArray.size(); i++)
+    {
+        result->supers.push_back(*superArray.at(i)->value.asciiStringValue);
+    }
+    
+    // Now go through the members (if any). Essentially, any entry that doesn't have the key '$class' is a member of the class
+    for (int i=0; i<dict.size(); i++)
+    {
+        string nextKey = *dict.at(i).key->value.asciiStringValue;
+        
+        if (nextKey.compare("$class") != 0)
+        {
+            PCH_UnarchivedClass::memberDef nextMember;
+            nextMember.name = nextKey;
+            
+            nextMember.baseType = *this->ExpandValue(PCH_PList_Value::ValueForStringKey(dict, nextKey));
+            
+            result->members.push_back(nextMember);
+        }
+    }
+    
+    return result;
+}

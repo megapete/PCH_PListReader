@@ -44,6 +44,7 @@ struct PCH_UnarchivedBase
     PCH_UnarchivedType type;
     
     PCH_UnarchivedBase() {this->type = Undefined;}
+    PCH_UnarchivedBase(PCH_UnarchivedType wType) {this->type = wType;}
     
     string TypeName();
 };
@@ -55,7 +56,7 @@ struct PCH_UnarchivedStruct : PCH_UnarchivedBase
     string name;
     
     // a vector of the structs from which this struct is derived
-    vector<string> superClasses;
+    vector<string> supers;
     
     // a struct to define each member
     struct memberDef
@@ -67,22 +68,30 @@ struct PCH_UnarchivedStruct : PCH_UnarchivedBase
     // the vector of struct members
     vector<memberDef> members;
     
-    PCH_UnarchivedStruct() {}
-    virtual ~PCH_UnarchivedStruct();
+    PCH_UnarchivedStruct() {this->type = Struct;}
+    virtual ~PCH_UnarchivedStruct() {};
 };
 
 struct PCH_UnarchivedClass : PCH_UnarchivedStruct
 {
-    PCH_UnarchivedClass() {}
-    virtual ~PCH_UnarchivedClass();
+    PCH_UnarchivedClass() {this->type = Class;}
+    virtual ~PCH_UnarchivedClass() {};
 };
 
-struct PCH_UnarchivedMember
+struct PCH_UnarchivedMember:PCH_UnarchivedBase
 {
-    PCH_UnarchivedBase *parent;
+    PCH_UnarchivedType type;
     
-    void *value;
-    
+    union pch_memberValue
+    {
+        bool boolVal;
+        int64_t intVal;
+        double doubleVal;
+        double dateVal;
+        vector<char> *dataVal;
+        string *stringVal;
+        
+    } value;
     
 };
 
@@ -94,6 +103,8 @@ public:
     
     PCH_PList_Value *pchPlistRoot;
     
+    PCH_UnarchivedBase *rootItem;
+    
     PCH_UnarchivedModel(PCH_PList_Value *root);
     
 private:
@@ -102,16 +113,14 @@ private:
     
     vector<PCH_PList_Value *> objects;
     
-    // struct definitions
-    vector<PCH_UnarchivedStruct> structs;
-    
-    // class definitions
-    vector<PCH_UnarchivedClass> classes;
-    
     // members
     vector<PCH_UnarchivedMember> members;
     
+    PCH_UnarchivedBase *ExpandValue(PCH_PList_Value *plistValue);
     
+    PCH_UnarchivedBase *ExpandObjectAtIndex(const int index);
+    
+    PCH_UnarchivedClass *ExpandClassDefinitionWith(const vector<PCH_PList_Value::dictStruct> dict);
 };
 
 #endif /* PCH_NSKeyedArchiver_Analyzer_hpp */
